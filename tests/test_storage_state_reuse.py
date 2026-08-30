@@ -1,10 +1,15 @@
-from playwright.sync_api import expect
+import pytest
+from playwright.async_api import async_playwright, expect
 
+@pytest.mark.asyncio
+async def test_authenticated_session():
+    async with async_playwright() as p:
+        # Reuse saved auth.json
+        browser = await p.chromium.launch(headless=False)
+        context = await browser.new_context(storage_state="auth.json")
+        page = await context.new_page()
 
-def test_storage_state_applies(page):
-    # Navigates to a secure page using the pytest-playwright `page` fixture.
-    # `tests/conftest.py` will apply `storage_state: auth.json` when present.
-    page.goto("https://the-internet.herokuapp.com/secure", timeout=120000, wait_until="networkidle")
-    title = page.title()
-    print("Page title:", title)
-    assert "Secure Area" in title or "The Internet" in title
+        await page.goto("https://example.com/dashboard")
+        await expect(page).to_have_url("https://example.com/dashboard")
+
+        await browser.close()
